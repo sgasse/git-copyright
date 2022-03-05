@@ -1,0 +1,35 @@
+# glob patterns of files to ignore
+ignore_files:
+  - "*.gz"
+  - "*.txt"
+
+# glob patterns of directories to ignore
+ignore_dirs:
+  - ".git"
+  - ".idea"
+  - "*__pycache__*"
+  - "**/node_modules"
+
+# Mapping from file extensions / filenames without extension to comment signs.
+# A single string specifies leading comment sign(s) while an array of two
+# defines enclosing comment signs.
+comment_sign_map:
+  .env: "#"
+  .gitignore: "#"
+  conf: "#"
+  css: ["/*", "*/"]
+  Dockerfile: "#"
+  hcl: "#"
+  in: "#"
+  js: "//"
+  proto: "//"
+  py: "#"
+  rs: "//"
+  sh: "#"
+  toml: "#"
+  tpl: "#"
+  ts: "//"
+  tsx: "//"
+  yaml: "#"
+  yml: "#"
+
