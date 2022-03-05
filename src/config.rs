@@ -1,3 +1,8 @@
+//! Parse configuration.
+//!
+//! If no custom configuration is specified, we fall back to the default
+//! configuration which is included as bytes in the compiled binary.
+
 use super::CommentSign;
 use glob::Pattern;
 use serde::Deserialize;

@@ -1,3 +1,7 @@
+# This default configuration is included as bytes in the compiled project. You
+# can either edit it and compile it again or copy it and specify your custom
+# configuration as input with the flag `--config`.
+
 # glob patterns of files to ignore
 ignore_files:
   - "*.gz"
@@ -32,4 +36,3 @@ comment_sign_map:
   tsx: "//"
   yaml: "#"
   yml: "#"
-

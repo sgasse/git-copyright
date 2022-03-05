@@ -1,3 +1,5 @@
+//! Add/update copyright notes according to history.
+
 use clap::Parser;
 use copyright_git::{check_repo_copyright, Config};
 use env_logger::TimestampPrecision;

@@ -1,4 +1,8 @@
-// Add fallback-regex for unparseable copyright?
+//! Compile and cache copyright regexes.
+//!
+//! This module contains functions to parse existing copyright notes. Regexes
+//! are compiled once per comment sign and stored in a cache.
+
 use super::get_hash;
 use super::CommentSign;
 use regex::Regex;

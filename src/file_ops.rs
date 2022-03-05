@@ -1,3 +1,5 @@
+//! Check and update copyright of file.
+
 use regex::Regex;
 use std::io::{BufRead, BufReader};
 use std::sync::Arc;

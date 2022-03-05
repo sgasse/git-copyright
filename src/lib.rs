@@ -1,3 +1,5 @@
+//! Extract added/last modified times from git history and add/update copyright note.
+
 pub mod config;
 pub mod file_ops;
 pub mod git_ops;

@@ -1,3 +1,7 @@
+//! Extract added/modified times from git history.
+//!
+//! This is built on top of libgit2. Renames are followed.
+
 use super::AddedModifiedInfo;
 use chrono::DateTime;
 use chrono::{TimeZone, Utc};
