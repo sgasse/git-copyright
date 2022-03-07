@@ -1,8 +1,8 @@
 //! Add/update copyright notes according to history.
 
 use clap::Parser;
-use copyright_git::{check_repo_copyright, Config};
 use env_logger::TimestampPrecision;
+use git_copyright::{check_repo_copyright, Config};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]

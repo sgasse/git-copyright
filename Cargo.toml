@@ -1,13 +1,18 @@
 [package]
-name = "git-copyright"
+name = "git_copyright"
+description = "Add/update copyright notes based on git history"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE-APACHE"
+readme = "README.md"
+repository = "https://github.com/sgasse/git-copyright"
 
 [lib]
+name = "git_copyright"
 path = "src/lib.rs"
 
 [[bin]]
-name = "git-copyright"
+name = "git_copyright"
 path = "src/main.rs"
 
 [dependencies]
