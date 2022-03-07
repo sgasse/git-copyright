@@ -1,14 +1,13 @@
 [package]
-name = "copyright_git"
+name = "git-copyright"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "copyright_git"
 path = "src/lib.rs"
 
 [[bin]]
-name = "copyright"
+name = "git-copyright"
 path = "src/main.rs"
 
 [dependencies]
