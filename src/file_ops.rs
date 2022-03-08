@@ -43,6 +43,11 @@ pub async fn check_and_fix_file(
         }
     }
 
+    println!(
+        "File {} has no copyright but should have {} - fixed",
+        filepath.display(),
+        years
+    );
     write_copyright(&filepath, &copyright_line, None).await;
 }
 
@@ -69,6 +74,10 @@ async fn write_copyright(filepath: &Path, copyright_line: &str, line_nr: Option<
         }
     }
 
+    let mut file = tokio::fs::File::create(filepath).await.expect(&format!(
+        "Could not open file {} asynchronously",
+        filepath.display()
+    ));
     file.write_all(data.join("\n").as_bytes())
         .await
         .expect(&format!("Unable to write file {:?}", filepath));
