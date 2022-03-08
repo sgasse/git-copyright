@@ -35,10 +35,11 @@ pub struct AddedModifiedInfo {
     pub original_path: PathBuf,
 }
 
-pub async fn check_repo_copyright(repo_path: &str, name: &str, config: &Config) {
-    let repo_path = Path::new(repo_path);
+pub async fn check_repo_copyright(repo_path_: &str, name: &str, config: &Config) {
+    let repo_path = Path::new(repo_path_);
     let repo = Repository::open(repo_path).expect("Could not open repository");
-    let files_to_check = get_files_on_ref(&repo, "HEAD").expect("Could not get files on `HEAD`");
+    let files_to_check =
+        get_files_on_ref(&repo, "HEAD", repo_path_).expect("Could not get files on `HEAD`");
     let files_to_check = config.filter_files(files_to_check.iter());
 
     let mut add_mod_ranges = get_add_mod_ranges(&repo, files_to_check.iter().map(|x| *x)).unwrap();

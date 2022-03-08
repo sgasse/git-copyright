@@ -11,14 +11,21 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Get all files in repository on given `refname`.
-pub fn get_files_on_ref(repo: &Repository, refname: &str) -> Result<Vec<String>, Error> {
+pub fn get_files_on_ref(
+    repo: &Repository,
+    refname: &str,
+    repopath: &str,
+) -> Result<Vec<String>, Error> {
     let ref_id = repo.refname_to_id(refname)?;
     let commit = repo.find_commit(ref_id)?;
     let tree = commit.tree()?;
     let mut files: Vec<String> = vec![];
-    tree.walk(TreeWalkMode::PreOrder, |_, entry| {
+    tree.walk(TreeWalkMode::PreOrder, |root, entry| {
         if let Some(filename) = entry.name() {
-            files.push(filename.into());
+            let path_in_repo = Path::new(root).join(Path::new(filename));
+            if Path::new(repopath).join(&path_in_repo).is_file() {
+                files.push(String::from(path_in_repo.to_str().unwrap()));
+            }
         }
         TreeWalkResult::Ok
     })?;
