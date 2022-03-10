@@ -12,7 +12,7 @@ pub async fn check_and_fix_file(
     years: String,
     copyright_line: String,
 ) {
-    // This could be re-written to read the file asynchronously until EOF of the first n
+    // This could be re-written to read the file asynchronously until EOF or the first n
     // newlines are found.
     let file = std::fs::File::open(&filepath)
         .expect(&format!("Could not open file {}", filepath.display()));
