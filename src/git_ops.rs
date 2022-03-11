@@ -1,11 +1,8 @@
 //! Extract added/modified times from git history.
 //!
 
-use crate::AddedModifiedYears;
 use crate::CheckCopyrightError;
 use chrono::Utc;
-use futures::future::join_all;
-use std::path::Path;
 use tokio::process::Command;
 
 /// Get all files in repository on given `refname`.
@@ -38,17 +35,7 @@ pub async fn get_files_on_ref(
         .collect())
 }
 
-pub async fn get_add_mod_ranges<'a>(
-    files_to_check: impl Iterator<Item = &'a String>,
-    repo_path: &str,
-) -> Result<Vec<AddedModifiedYears>, CheckCopyrightError> {
-    let time_futures: Vec<_> = files_to_check
-        .map(|filepath| get_added_mod_times_for_file(filepath, repo_path))
-        .collect();
-    Ok(join_all(time_futures).await)
-}
-
-async fn get_added_mod_times_for_file(filepath: &str, cwd: &str) -> AddedModifiedYears {
+pub async fn get_added_mod_times_for_file(filepath: &str, cwd: &str) -> String {
     let output = Command::new("git")
         .arg("log")
         .arg("--follow")
@@ -71,7 +58,7 @@ async fn get_added_mod_times_for_file(filepath: &str, cwd: &str) -> AddedModifie
         })
         .collect();
 
-    let years_string = match commit_years.len() {
+    match commit_years.len() {
         0 => {
             log::debug!("File {} is untracked, add current year", filepath);
             Utc::now().date().format("%Y").to_string()
@@ -89,10 +76,5 @@ async fn get_added_mod_times_for_file(filepath: &str, cwd: &str) -> AddedModifie
                 false => format!("{}-{}", added, last_modified),
             }
         }
-    };
-
-    AddedModifiedYears {
-        original_path: Path::new(filepath).to_path_buf(),
-        years: years_string,
     }
 }

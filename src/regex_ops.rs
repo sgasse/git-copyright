@@ -7,6 +7,7 @@ use super::get_hash;
 use super::CommentSign;
 use regex::Regex;
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -49,11 +50,16 @@ pub fn generate_base_regex(name: &str) -> String {
     .join(" ")
 }
 
-pub fn generate_copyright_line(name: &str, comment_sign: &CommentSign, years: &str) -> String {
+pub async fn generate_copyright_line(
+    name: &str,
+    comment_sign: &CommentSign,
+    years_fut: impl Future<Output = String>,
+) -> String {
+    let years = years_fut.await;
     match comment_sign {
-        CommentSign::LeftOnly(ref left) => [left, "Copyright (c)", name, years].join(" "),
+        CommentSign::LeftOnly(ref left) => [left, "Copyright (c)", name, &years].join(" "),
         CommentSign::Enclosing(ref left, ref right) => {
-            [left, "Copyright (c)", name, years, right].join(" ")
+            [left, "Copyright (c)", name, &years, right].join(" ")
         }
     }
 }
