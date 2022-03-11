@@ -42,7 +42,7 @@ impl CopyrightCache {
 
 pub fn generate_base_regex(name: &str) -> String {
     [
-        r"\(c\) Copyright",
+        r"Copyright \(c\)",
         &escape_for_regex(name),
         r"(\d{4}(-\d{4}){0,1})",
     ]
@@ -51,9 +51,9 @@ pub fn generate_base_regex(name: &str) -> String {
 
 pub fn generate_copyright_line(name: &str, comment_sign: &CommentSign, years: &str) -> String {
     match comment_sign {
-        CommentSign::LeftOnly(ref left) => [left, "(c) Copyright", name, years].join(" "),
+        CommentSign::LeftOnly(ref left) => [left, "Copyright (c)", name, years].join(" "),
         CommentSign::Enclosing(ref left, ref right) => {
-            [left, "(c) Copyright", name, years, right].join(" ")
+            [left, "Copyright (c)", name, years, right].join(" ")
         }
     }
 }
@@ -100,7 +100,7 @@ mod test {
 
     #[test]
     fn test_generate_file_regex() {
-        let file_header = "// (c) Copyright DummyCompany Ltd. 2020-2021";
+        let file_header = "// Copyright (c) DummyCompany Ltd. 2020-2021";
         let regex = generate_comment_regex(
             &generate_base_regex("DummyCompany Ltd."),
             &CommentSign::LeftOnly("//".into()),
@@ -120,24 +120,24 @@ mod test {
 
     #[test]
     fn test_rs_regex() {
-        let header = "// (c) Copyright DummyCompany Ltd. 2022";
-        let full_regex_str = r"^// \(c\) Copyright DummyCompany Ltd\. (\d{4}(-\d{4}){0,1})$";
+        let header = "// Copyright (c) DummyCompany Ltd. 2022";
+        let full_regex_str = r"^// Copyright \(c\) DummyCompany Ltd\. (\d{4}(-\d{4}){0,1})$";
         let regex = Regex::new(full_regex_str).unwrap();
         assert!(regex.is_match(header));
     }
 
     #[test]
     fn test_star_in_regex() {
-        let file_header = "/* (c) Copyright DummyCompany Ltd. 2020-2021 */";
-        let regex_str = r"^/\* \(c\) Copyright DummyCompany Ltd. \d{4}(-\d{4}){0,1} \*/$";
+        let file_header = "/* Copyright (c) DummyCompany Ltd. 2020-2021 */";
+        let regex_str = r"^/\* Copyright \(c\) DummyCompany Ltd. \d{4}(-\d{4}){0,1} \*/$";
         let regex = Regex::new(regex_str).unwrap();
         assert!(regex.is_match(file_header));
     }
 
     #[test]
     fn test_forward_slash_in_regex() {
-        let file_header = "// (c) Copyright DummyCompany Ltd. 2020-2021";
-        let regex_str = r"^// \(c\) Copyright DummyCompany Ltd. \d{4}(-\d{4}){0,1}$";
+        let file_header = "// Copyright (c) DummyCompany Ltd. 2020-2021";
+        let regex_str = r"^// Copyright \(c\) DummyCompany Ltd. \d{4}(-\d{4}){0,1}$";
         let regex = Regex::new(regex_str).unwrap();
         assert!(regex.is_match(file_header));
     }
@@ -148,23 +148,23 @@ mod test {
         let base_regex = generate_base_regex(name);
         assert_eq!(
             base_regex,
-            r"\(c\) Copyright DummyCompany Ltd\. (\d{4}(-\d{4}){0,1})"
+            r"Copyright \(c\) DummyCompany Ltd\. (\d{4}(-\d{4}){0,1})"
         );
     }
 
     #[test]
     fn test_regex_match() {
         let valid_copyrights = [
-            "# (c) Copyright DummyCompany Ltd. 2019",
-            "# (c) Copyright DummyCompany Ltd. 2020-2021",
+            "# Copyright (c) DummyCompany Ltd. 2019",
+            "# Copyright (c) DummyCompany Ltd. 2020-2021",
         ];
         let invalid_copyrights = [
-            "# (c) Copyright DummyCompany Ltd. 2019-",
-            "# (c) Copyright DummyCompany Ltd. 2020-2021-2023",
-            "# (c) Copyright DummyCompany Ltd. 20202021",
+            "# Copyright (c) DummyCompany Ltd. 2019-",
+            "# Copyright (c) DummyCompany Ltd. 2020-2021-2023",
+            "# Copyright (c) DummyCompany Ltd. 20202021",
         ];
 
-        let copyright_re_str = r"^# \(c\) Copyright DummyCompany Ltd. \d{4}(-\d{4}){0,1}$";
+        let copyright_re_str = r"^# Copyright \(c\) DummyCompany Ltd. \d{4}(-\d{4}){0,1}$";
         let copyright_re = Regex::new(copyright_re_str).unwrap();
 
         for example in valid_copyrights {
