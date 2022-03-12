@@ -3,7 +3,8 @@
 //! If no custom configuration is specified, we fall back to the default
 //! configuration which is included as bytes in the compiled binary.
 
-use super::CommentSign;
+use crate::CError;
+use crate::CommentSign;
 use glob::Pattern;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -22,20 +23,19 @@ impl Config {
     pub fn default() -> Self {
         let cfg_bytes = include_bytes!("./default_cfg.yml");
         let cfg_str = String::from_utf8_lossy(cfg_bytes);
+        Self::from_str(&cfg_str).expect("Failed to load default config")
+    }
+
+    pub fn from_file(cfg_file: &str) -> Result<Self, CError> {
+        let cfg_str = std::fs::read_to_string(cfg_file)?;
         Self::from_str(&cfg_str)
     }
 
-    pub fn from_file(cfg_file: &str) -> Self {
-        let cfg_str = std::fs::read_to_string(cfg_file)
-            .expect(&format!("Could not read config file {}", cfg_file));
-
-        Self::from_str(&cfg_str)
-    }
-
-    pub fn from_str(cfg_str: &str) -> Self {
-        let mut cfg = serde_yaml::from_str::<Self>(&cfg_str).expect("Could not deserialize config");
+    pub fn from_str(cfg_str: &str) -> Result<Self, CError> {
+        let mut cfg = serde_yaml::from_str::<Self>(&cfg_str)
+            .map_err(|e| CError::ConfigError(format!("Could not deserialize config: {}", e)))?;
         cfg.build_glob_pattern();
-        return cfg;
+        return Ok(cfg);
     }
 
     pub fn get_comment_sign(&self, filename: &str) -> Option<&CommentSign> {
@@ -95,7 +95,7 @@ mod test {
 
     #[test]
     fn test_config_from_file() {
-        let cfg = Config::from_file("./src/default_cfg.yml");
+        let cfg = Config::from_file("./src/default_cfg.yml").unwrap();
         assert_eq!(
             cfg.get_comment_sign("file.rs"),
             Some(&CommentSign::LeftOnly("//".into()))

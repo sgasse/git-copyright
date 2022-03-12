@@ -1,5 +1,6 @@
 //! Add/update copyright notes according to history.
 
+use anyhow::{Context, Result};
 use clap::Parser;
 use env_logger::TimestampPrecision;
 use git_copyright::{check_repo_copyright, Config};
@@ -22,7 +23,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let args = Args::parse();
 
     env_logger::builder()
@@ -37,11 +38,14 @@ async fn main() {
         cfg_file => {
             log::info!("Using config {}", cfg_file);
             Config::from_file(cfg_file)
+                .context(format!("Unable to get config from file {}", cfg_file))?
         }
     };
 
     let start = Instant::now();
-    check_repo_copyright(&args.repo, &args.name, &config).await;
+    check_repo_copyright(&args.repo, &args.name, &config).await?;
     let duration_s = start.elapsed().as_millis() as f32 / 1000.0;
-    println!("Finished in {:0.3}s", duration_s);
+    println!("Copyrights checked and updated in {:0.3}s", duration_s);
+
+    Ok(())
 }

@@ -1,15 +1,12 @@
 //! Extract added/modified times from git history.
 //!
 
-use crate::CheckCopyrightError;
+use crate::CError;
 use chrono::Utc;
 use tokio::process::Command;
 
 /// Get all files in repository on given `refname`.
-pub async fn get_files_on_ref(
-    repo_path: &str,
-    ref_name: &str,
-) -> Result<Vec<String>, CheckCopyrightError> {
+pub async fn get_files_on_ref(repo_path: &str, ref_name: &str) -> Result<Vec<String>, CError> {
     let output = Command::new("git")
         .arg("ls-tree")
         .arg("-r")
@@ -19,10 +16,13 @@ pub async fn get_files_on_ref(
         .output();
 
     let output = output.await?;
+    if !output.status.success() {
+        return Err(CError::GitCmdError(
+            String::from_utf8(output.stderr).map_err(|e| e.utf8_error())?,
+        ));
+    }
 
-    // TODO: Handle error case
-
-    let output = std::str::from_utf8(&output.stdout).expect("Could not decode command output");
+    let output = std::str::from_utf8(&output.stdout)?;
     Ok(output
         .split('\n')
         .filter_map(|s| {
