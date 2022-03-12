@@ -1,17 +1,21 @@
 //! Check and update copyright of file.
 
+use futures::join;
+use futures::Future;
 use regex::Regex;
 use std::io::{BufRead, BufReader};
 use std::sync::Arc;
 use std::{path::Path, path::PathBuf};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-pub async fn check_and_fix_file(
+pub async fn read_write_copyright(
     filepath: PathBuf,
     regex: Arc<Regex>,
-    years: String,
-    copyright_line: String,
+    years_fut: impl Future<Output = String>,
+    copyright_line: impl Future<Output = String>,
 ) {
+    let (years, copyright_line) = join!(years_fut, copyright_line);
+
     // This could be re-written to read the file asynchronously until EOF or the first n
     // newlines are found.
     let file = std::fs::File::open(&filepath)

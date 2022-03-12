@@ -6,16 +6,17 @@ pub mod git_ops;
 pub mod regex_ops;
 
 pub use config::Config;
-use file_ops::check_and_fix_file;
+use file_ops::read_write_copyright;
 use futures::future::join_all;
-use git_ops::{get_add_mod_ranges, get_files_on_ref};
+use futures::FutureExt;
+use git_ops::get_added_mod_times_for_file;
+use git_ops::get_files_on_ref;
 use regex_ops::CopyrightCache;
 use regex_ops::{generate_base_regex, generate_copyright_line};
 use serde::Deserialize;
 use std::collections::hash_map::DefaultHasher;
-use std::collections::HashMap;
 use std::hash::Hasher;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use thiserror::Error;
 
@@ -36,12 +37,6 @@ pub enum CommentSign {
     Enclosing(String, String),
 }
 
-#[derive(Debug)]
-pub struct AddedModifiedYears {
-    pub original_path: PathBuf,
-    pub years: String,
-}
-
 pub async fn check_repo_copyright(repo_path_: &str, name: &str, config: &Config) {
     let repo_path = Path::new(repo_path_);
     let files_to_check = get_files_on_ref(repo_path_, "HEAD")
@@ -55,31 +50,23 @@ pub async fn check_repo_copyright(repo_path_: &str, name: &str, config: &Config)
 
     println!("Checking {} files", files_to_check.len());
 
-    let mut add_mod_years = get_add_mod_ranges(files_to_check.iter().map(|x| *x), repo_path_)
-        .await
-        .unwrap();
-    let add_mod_map: HashMap<u64, AddedModifiedYears> = add_mod_years
-        .drain(..)
-        .map(|am_info| (get_hash(&am_info.original_path.to_str().unwrap()), am_info))
-        .collect();
-
     let base_regex = generate_base_regex(name);
     let regex_cache = CopyrightCache::new(&base_regex);
 
     let check_and_fix_futures: Vec<_> = files_to_check
         .iter()
         .map(|filepath| {
-            let years = &add_mod_map.get(&get_hash(filepath)).unwrap().years;
             let comment_sign = config
                 .get_comment_sign(filepath)
                 .expect(&format!("Could not get comment sign for {}", filepath));
-            let copyright_line = generate_copyright_line(name, comment_sign, years);
+            let years_fut = get_added_mod_times_for_file(filepath, repo_path_).shared();
+            let copyright_line_fut = generate_copyright_line(name, comment_sign, years_fut.clone());
             let filepath = repo_path.join(filepath);
-            check_and_fix_file(
+            read_write_copyright(
                 filepath,
                 regex_cache.get_regex(comment_sign),
-                years.clone(),
-                copyright_line,
+                years_fut,
+                copyright_line_fut,
             )
         })
         .collect();
