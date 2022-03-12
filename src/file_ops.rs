@@ -1,5 +1,6 @@
 //! Check and update copyright of file.
 
+use crate::CError;
 use futures::join;
 use futures::Future;
 use regex::Regex;
@@ -13,13 +14,13 @@ pub async fn read_write_copyright(
     regex: Arc<Regex>,
     years_fut: impl Future<Output = String>,
     copyright_line: impl Future<Output = String>,
-) {
+) -> Result<(), CError> {
     let (years, copyright_line) = join!(years_fut, copyright_line);
 
     // This could be re-written to read the file asynchronously until EOF or the first n
     // newlines are found.
     let file = std::fs::File::open(&filepath)
-        .expect(&format!("Could not open file {}", filepath.display()));
+        .map_err(|_| CError::ReadError(filepath.display().to_string()))?;
     let file_header = BufReader::new(file).lines().take(3);
 
     for (line_nr, line_) in file_header.enumerate() {
@@ -31,43 +32,40 @@ pub async fn read_write_copyright(
                         filepath.display(),
                         years
                     );
-                    return;
+                    return Ok(());
                 } else {
                     println!(
-                        "File {} has copyright with year(s) {} on line {} but should have {} - fixed",
+                        "File {} has copyright with year(s) {} on line {} but should have {}",
                         filepath.display(),
                         &cap[1],
                         line_nr,
                         years
                     );
-                    write_copyright(&filepath, &copyright_line, Some(line_nr)).await;
-                    return;
+                    return write_copyright(&filepath, &copyright_line, Some(line_nr)).await;
                 }
             }
         }
     }
 
     println!(
-        "File {} has no copyright but should have {} - fixed",
+        "File {} has no copyright but should have {}",
         filepath.display(),
         years
     );
-    write_copyright(&filepath, &copyright_line, None).await;
+    write_copyright(&filepath, &copyright_line, None).await
 }
 
-async fn write_copyright(filepath: &Path, copyright_line: &str, line_nr: Option<usize>) {
-    let mut file = tokio::fs::File::open(filepath).await.expect(&format!(
-        "Could not open file {} asynchronously",
-        filepath.display()
-    ));
-    let mut data = Vec::new();
-    file.read_to_end(&mut data)
+async fn write_copyright(
+    filepath: &Path,
+    copyright_line: &str,
+    line_nr: Option<usize>,
+) -> Result<(), CError> {
+    let mut file = tokio::fs::File::open(filepath)
         .await
-        .expect("Could not read file");
-    let mut data: Vec<&str> = std::str::from_utf8(&data)
-        .expect("Could not decode file content to utf8")
-        .split("\n")
-        .collect();
+        .map_err(|_| CError::ReadError(filepath.display().to_string()))?;
+    let mut data = Vec::new();
+    file.read_to_end(&mut data).await?;
+    let mut data: Vec<&str> = std::str::from_utf8(&data)?.split("\n").collect();
 
     match line_nr {
         Some(line_nr) => {
@@ -78,11 +76,12 @@ async fn write_copyright(filepath: &Path, copyright_line: &str, line_nr: Option<
         }
     }
 
-    let mut file = tokio::fs::File::create(filepath).await.expect(&format!(
-        "Could not open file {} asynchronously",
-        filepath.display()
-    ));
+    let mut file = tokio::fs::File::create(filepath)
+        .await
+        .map_err(|_| CError::WriteError(filepath.display().to_string()))?;
     file.write_all(data.join("\n").as_bytes())
         .await
-        .expect(&format!("Unable to write file {:?}", filepath));
+        .map_err(|_| CError::WriteError(filepath.display().to_string()))?;
+
+    Ok(())
 }

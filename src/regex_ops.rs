@@ -3,8 +3,9 @@
 //! This module contains functions to parse existing copyright notes. Regexes
 //! are compiled once per comment sign and stored in a cache.
 
-use super::get_hash;
-use super::CommentSign;
+use crate::get_hash;
+use crate::CError;
+use crate::CommentSign;
 use regex::Regex;
 use std::collections::HashMap;
 use std::future::Future;
@@ -24,20 +25,20 @@ impl CopyrightCache {
         }
     }
 
-    pub fn get_regex(&self, comment_sign: &CommentSign) -> Arc<Regex> {
+    pub fn get_regex(&self, comment_sign: &CommentSign) -> Result<Arc<Regex>, CError> {
         let c_sign_hash = get_hash(comment_sign);
 
         if let Some(regex) = self.regexes.read().unwrap().get(&c_sign_hash) {
-            return Arc::clone(regex);
+            return Ok(Arc::clone(regex));
         }
 
         log::debug!("Initializing regex for comment sign {:?}", &comment_sign);
-        let regex = Arc::new(generate_comment_regex(&self.base_regex, comment_sign).unwrap());
+        let regex = Arc::new(generate_comment_regex(&self.base_regex, comment_sign)?);
         self.regexes
             .write()
             .unwrap()
             .insert(get_hash(comment_sign), Arc::clone(&regex));
-        regex
+        Ok(regex)
     }
 }
 
@@ -64,19 +65,7 @@ pub async fn generate_copyright_line(
     }
 }
 
-fn escape_for_regex(text: &str) -> String {
-    text.chars()
-        .map(|char| match char {
-            '*' => String::from(r"\*"),
-            '.' => String::from(r"\."),
-            other => String::from(other),
-        })
-        .collect::<Vec<String>>()
-        .as_slice()
-        .join("")
-}
-
-fn generate_comment_regex(base_regex: &str, comment_sign: &CommentSign) -> Result<Regex, String> {
+fn generate_comment_regex(base_regex: &str, comment_sign: &CommentSign) -> Result<Regex, CError> {
     let full_regex_str = match comment_sign {
         CommentSign::LeftOnly(left_sign) => {
             ["^", &escape_for_regex(&left_sign), " ", base_regex, "$"].join("")
@@ -93,9 +82,20 @@ fn generate_comment_regex(base_regex: &str, comment_sign: &CommentSign) -> Resul
         .join(""),
     };
 
-    Ok(Regex::new(&full_regex_str).unwrap())
+    Ok(Regex::new(&full_regex_str)?)
 }
 
+fn escape_for_regex(text: &str) -> String {
+    text.chars()
+        .map(|char| match char {
+            '*' => String::from(r"\*"),
+            '.' => String::from(r"\."),
+            other => String::from(other),
+        })
+        .collect::<Vec<String>>()
+        .as_slice()
+        .join("")
+}
 #[cfg(test)]
 mod test {
 

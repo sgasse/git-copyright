@@ -1,11 +1,13 @@
 //! Extract added/last modified times from git history and add/update copyright note.
 
 pub mod config;
+pub mod error;
 pub mod file_ops;
 pub mod git_ops;
 pub mod regex_ops;
 
 pub use config::Config;
+pub use error::CError;
 use file_ops::read_write_copyright;
 use futures::future::join_all;
 use futures::FutureExt;
@@ -18,18 +20,6 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 use std::path::Path;
 
-use thiserror::Error;
-
-/// CheckCopyrightError enumerates possible errors returned by this library.
-#[derive(Error, Debug)]
-pub enum CheckCopyrightError {
-    #[error("No comment sign found for file/extension")]
-    NoCommentSign,
-
-    #[error(transparent)]
-    IOError(#[from] std::io::Error),
-}
-
 #[derive(Debug, Deserialize, Hash, PartialEq)]
 #[serde(untagged)]
 pub enum CommentSign {
@@ -37,11 +27,13 @@ pub enum CommentSign {
     Enclosing(String, String),
 }
 
-pub async fn check_repo_copyright(repo_path_: &str, name: &str, config: &Config) {
+pub async fn check_repo_copyright(
+    repo_path_: &str,
+    name: &str,
+    config: &Config,
+) -> Result<(), CError> {
     let repo_path = Path::new(repo_path_);
-    let files_to_check = get_files_on_ref(repo_path_, "HEAD")
-        .await
-        .expect("Could not get files on `HEAD`");
+    let files_to_check = get_files_on_ref(repo_path_, "HEAD").await?;
     let files_to_check: Vec<&String> = config
         .filter_files(files_to_check.iter())
         .into_iter()
@@ -64,14 +56,24 @@ pub async fn check_repo_copyright(repo_path_: &str, name: &str, config: &Config)
             let filepath = repo_path.join(filepath);
             read_write_copyright(
                 filepath,
-                regex_cache.get_regex(comment_sign),
+                regex_cache.get_regex(comment_sign).unwrap(),
                 years_fut,
                 copyright_line_fut,
             )
         })
         .collect();
 
-    join_all(check_and_fix_futures).await;
+    let results = join_all(check_and_fix_futures).await;
+    let failed: Vec<_> = results.iter().filter(|res| res.is_err()).collect();
+    failed.iter().for_each(|res_err| {
+        println!("Error: {}", res_err.as_ref().unwrap_err());
+    });
+
+    if !failed.is_empty() {
+        return Err(CError::FixError);
+    }
+
+    Ok(())
 }
 
 pub fn get_hash<T: std::hash::Hash>(obj: &T) -> u64 {
