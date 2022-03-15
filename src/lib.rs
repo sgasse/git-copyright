@@ -27,11 +27,8 @@ pub enum CommentSign {
     Enclosing(String, String),
 }
 
-pub async fn check_repo_copyright(
-    repo_path_: &str,
-    name: &str,
-    config: &Config,
-) -> Result<(), CError> {
+pub async fn check_repo_copyright(repo_path_: &str, name: &str) -> Result<(), CError> {
+    let config = Config::global();
     let repo_path = Path::new(repo_path_);
     let files_to_check = get_files_on_ref(repo_path_, "HEAD").await?;
     let files_to_check: Vec<&String> = config
