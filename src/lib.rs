@@ -44,20 +44,7 @@ pub async fn check_repo_copyright(repo_path_: &str, name: &str) -> Result<(), CE
 
     let check_and_fix_futures: Vec<_> = files_to_check
         .iter()
-        .map(|filepath| {
-            let comment_sign = config
-                .get_comment_sign(filepath)
-                .expect(&format!("Could not get comment sign for {}", filepath));
-            let years_fut = get_added_mod_times_for_file(filepath, repo_path_).shared();
-            let copyright_line_fut = generate_copyright_line(name, comment_sign, years_fut.clone());
-            let filepath = repo_path.join(filepath);
-            read_write_copyright(
-                filepath,
-                regex_cache.get_regex(comment_sign).unwrap(),
-                years_fut,
-                copyright_line_fut,
-            )
-        })
+        .map(|filepath| check_file_copyright(filepath, repo_path_, name, &regex_cache))
         .collect();
 
     let results = join_all(check_and_fix_futures).await;
@@ -71,6 +58,20 @@ pub async fn check_repo_copyright(repo_path_: &str, name: &str) -> Result<(), CE
     }
 
     Ok(())
+}
+
+async fn check_file_copyright(
+    filepath: &str,
+    repo_path: &str,
+    name: &str,
+    regex_cache: &CopyrightCache,
+) -> Result<(), CError> {
+    let comment_sign = Config::global().get_comment_sign(filepath)?;
+    let years_fut = get_added_mod_times_for_file(filepath, repo_path).shared();
+    let copyright_line_fut = generate_copyright_line(name, comment_sign, years_fut.clone());
+    let filepath = Path::new(repo_path).join(filepath);
+    let regex = regex_cache.get_regex(comment_sign)?;
+    read_write_copyright(filepath, regex, years_fut, copyright_line_fut).await
 }
 
 pub fn get_hash<T: std::hash::Hash>(obj: &T) -> u64 {

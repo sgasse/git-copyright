@@ -5,8 +5,8 @@
 /// Error enumerates possible errors returned by this library.
 #[derive(thiserror::Error, Debug)]
 pub enum CError {
-    #[error("No comment sign found for file/extension")]
-    NoCommentSign,
+    #[error("No comment sign found for file {0}")]
+    UnknownCommentSign(String),
 
     #[error("Error while running git subcommand: {0}")]
     GitCmdError(String),
