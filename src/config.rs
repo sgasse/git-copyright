@@ -49,17 +49,22 @@ impl Config {
         return Ok(cfg);
     }
 
-    pub fn get_comment_sign(&self, filename: &str) -> Option<&CommentSign> {
-        let filename = Path::new(filename);
-        let ext_filename = match filename.extension() {
-            Some(ext) => ext,
-            None => filename.file_name().expect("Could not decode filename"),
+    pub fn get_comment_sign(&self, filename: &str) -> Result<&CommentSign, CError> {
+        let filepath = Path::new(filename);
+        let ext_filename = match filepath.extension() {
+            Some(ext) => Some(ext),
+            None => filepath.file_name(),
         };
-        let ext_filename = ext_filename
-            .to_str()
-            .expect("Could not interpret filename/extension");
 
-        self.comment_sign_map.get(ext_filename)
+        if let Some(ext_filename) = ext_filename {
+            if let Some(ext_filename) = ext_filename.to_str() {
+                if let Some(c_sign) = self.comment_sign_map.get(ext_filename) {
+                    return Ok(c_sign);
+                }
+            }
+        }
+
+        Err(CError::UnknownCommentSign(filename.into()))
     }
 
     pub fn filter_files<'a>(&self, files: impl Iterator<Item = &'a String>) -> Vec<&'a String> {
@@ -108,14 +113,14 @@ mod test {
     fn test_config_from_file() {
         let cfg = Config::from_file("./src/default_cfg.yml").unwrap();
         assert_eq!(
-            cfg.get_comment_sign("file.rs"),
-            Some(&CommentSign::LeftOnly("//".into()))
+            cfg.get_comment_sign("file.rs").unwrap(),
+            &CommentSign::LeftOnly("//".into())
         );
 
         let cfg = Config::default();
         assert_eq!(
-            cfg.get_comment_sign("file.py"),
-            Some(&CommentSign::LeftOnly("#".into()))
+            cfg.get_comment_sign("file.py").unwrap(),
+            &CommentSign::LeftOnly("#".into())
         );
     }
 
