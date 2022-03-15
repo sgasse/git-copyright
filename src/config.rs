@@ -6,9 +6,12 @@
 use crate::CError;
 use crate::CommentSign;
 use glob::Pattern;
+use once_cell::sync::OnceCell;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
+
+static CFG: OnceCell<Config> = OnceCell::new();
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -20,6 +23,14 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn global() -> &'static Config {
+        CFG.get().expect("Config is not initialized")
+    }
+
+    pub fn assign(self) {
+        CFG.set(self).expect("Global config is already assigned to");
+    }
+
     pub fn default() -> Self {
         let cfg_bytes = include_bytes!("./default_cfg.yml");
         let cfg_str = String::from_utf8_lossy(cfg_bytes);

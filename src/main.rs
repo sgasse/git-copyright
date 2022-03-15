@@ -30,20 +30,21 @@ async fn main() -> Result<()> {
         .format_timestamp(Some(TimestampPrecision::Millis))
         .init();
 
-    let config = match args.config.as_str() {
+    match args.config.as_str() {
         "" => {
             log::info!("Using default configuration");
-            Config::default()
+            Config::default().assign();
         }
         cfg_file => {
             log::info!("Using config {}", cfg_file);
             Config::from_file(cfg_file)
                 .context(format!("Unable to get config from file {}", cfg_file))?
+                .assign();
         }
-    };
+    }
 
     let start = Instant::now();
-    check_repo_copyright(&args.repo, &args.name, &config).await?;
+    check_repo_copyright(&args.repo, &args.name).await?;
     let duration_s = start.elapsed().as_millis() as f32 / 1000.0;
     println!("Copyrights checked and updated in {:0.3}s", duration_s);
 
