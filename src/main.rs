@@ -20,6 +20,10 @@ struct Args {
     /// YAML file with config to use
     #[clap(short, long, default_value = "")]
     config: String,
+
+    /// Do not fail even if tracked files changed
+    #[clap(short, long)]
+    ignore_changes: bool,
 }
 
 #[tokio::main]
@@ -44,7 +48,7 @@ async fn main() -> Result<()> {
     }
 
     let start = Instant::now();
-    check_repo_copyright(&args.repo, &args.name).await?;
+    check_repo_copyright(&args.repo, &args.name, !args.ignore_changes).await?;
     let duration_s = start.elapsed().as_millis() as f32 / 1000.0;
     println!("Copyrights checked and updated in {:0.3}s", duration_s);
 

@@ -11,6 +11,7 @@ pub use error::CError;
 use file_ops::read_write_copyright;
 use futures::future::join_all;
 use futures::FutureExt;
+use git_ops::check_for_changes;
 use git_ops::get_added_mod_times_for_file;
 use git_ops::get_files_on_ref;
 use regex_ops::CopyrightCache;
@@ -27,7 +28,11 @@ pub enum CommentSign {
     Enclosing(String, String),
 }
 
-pub async fn check_repo_copyright(repo_path_: &str, name: &str) -> Result<(), CError> {
+pub async fn check_repo_copyright(
+    repo_path_: &str,
+    name: &str,
+    fail_on_diff: bool,
+) -> Result<(), CError> {
     let config = Config::global();
     let repo_path = Path::new(repo_path_);
     let files_to_check = get_files_on_ref(repo_path_, "HEAD").await?;
@@ -56,6 +61,8 @@ pub async fn check_repo_copyright(repo_path_: &str, name: &str) -> Result<(), CE
     if !failed.is_empty() {
         return Err(CError::FixError);
     }
+
+    check_for_changes(repo_path_, fail_on_diff).await?;
 
     Ok(())
 }
