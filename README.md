@@ -1,4 +1,4 @@
-# git-copyright
+# git_copyright
 
 Extract added/last modified times from git history and add/update copyright notes accordingly.
 
@@ -41,7 +41,7 @@ git_copyright --name "MyCompany Ltd." --repo "../../my_repo" --config "./custom_
 You can also use a pre-built image:
 
 ```bash
-docker run --rm -u $(id -u) -v $(pwd):/mnt sgasse/git_copyright:0.2.7 --name "MyCompany Ltd."
+docker run --rm -u $(id -u) -v $(pwd):/mnt sgasse/git_copyright:v0.2.7 --name "MyCompany Ltd."
 ```
 
 ## Development
