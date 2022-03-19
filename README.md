@@ -36,6 +36,14 @@ A full command might look like this:
 git_copyright --name "MyCompany Ltd." --repo "../../my_repo" --config "./custom_cfg.yml" --ignore-changes
 ```
 
+### Run with Docker
+
+You can also use a pre-built image:
+
+```bash
+docker run --rm -u $(id -u) -v $(pwd):/mnt sgasse/git_copyright:0.2.7 --name "MyCompany Ltd."
+```
+
 ## Development
 
 When developing, you can set the log environment variable to see debug log output:
