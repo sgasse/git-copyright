@@ -22,17 +22,7 @@ pub async fn get_files_on_ref(repo_path: &str, ref_name: &str) -> Result<Vec<Str
         ));
     }
 
-    let output = std::str::from_utf8(&output.stdout)?;
-    Ok(output
-        .split('\n')
-        .filter_map(|s| {
-            let s = s.to_owned();
-            match s.len() {
-                0 => None,
-                _ => Some(s),
-            }
-        })
-        .collect())
+    Ok(parse_cmd_output(&output)?)
 }
 
 pub async fn get_added_mod_times_for_file(filepath: &str, cwd: &str) -> String {
@@ -77,4 +67,52 @@ pub async fn get_added_mod_times_for_file(filepath: &str, cwd: &str) -> String {
             }
         }
     }
+}
+
+pub async fn check_for_changes(repo_path: &str, fail_on_diff: bool) -> Result<(), CError> {
+    let diff_files = get_diffs(repo_path).await?;
+    if diff_files.len() > 0 {
+        println!("Files changed:");
+        for filepath in diff_files.iter() {
+            println!("{}", filepath);
+        }
+
+        if fail_on_diff {
+            return Err(CError::FilesChanged);
+        }
+    }
+
+    Ok(())
+}
+
+async fn get_diffs<'a>(repo_path: &str) -> Result<Vec<String>, CError> {
+    let output = Command::new("git")
+        .arg("diff")
+        .arg("--name-only")
+        .current_dir(repo_path)
+        .output();
+
+    let output = output.await?;
+    if !output.status.success() {
+        return Err(CError::GitCmdError(
+            String::from_utf8(output.stderr).map_err(|e| e.utf8_error())?,
+        ));
+    }
+
+    Ok(parse_cmd_output(&output)?)
+}
+
+fn parse_cmd_output(output: &std::process::Output) -> Result<Vec<String>, CError> {
+    let output = std::str::from_utf8(&output.stdout)?;
+    let lines: Vec<String> = output
+        .split('\n')
+        .filter_map(|s| {
+            let s = s.to_owned();
+            match s.len() {
+                0 => None,
+                _ => Some(s),
+            }
+        })
+        .collect();
+    Ok(lines)
 }

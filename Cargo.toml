@@ -1,6 +1,6 @@
 [package]
 description = "Add/update copyright notes based on git history"
-version = "0.2.6"
+version = "0.2.7"
 edition = "2021"
 license-file = "LICENSE-APACHE"
 name = "git_copyright"

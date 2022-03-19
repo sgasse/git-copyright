@@ -23,6 +23,9 @@ pub enum CError {
     #[error("Some copyrights could not be fixed, please check the output")]
     FixError,
 
+    #[error("The copyright job changed tracked files that should be committed")]
+    FilesChanged,
+
     #[error(transparent)]
     GenericIOError(#[from] std::io::Error),
 
