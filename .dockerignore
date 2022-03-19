@@ -1,0 +1,7 @@
+# Things to ignore in the Docker build
+
+Cargo.lock
+Dockerfile
+.dockerignore
+.github
+.vscode
