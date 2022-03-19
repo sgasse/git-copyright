@@ -1,7 +1,5 @@
 //! Define custom error type.
 
-// use thiserror::Error;
-
 /// Error enumerates possible errors returned by this library.
 #[derive(thiserror::Error, Debug)]
 pub enum CError {

@@ -5,7 +5,6 @@ use crate::CError;
 use chrono::Utc;
 use tokio::process::Command;
 
-/// Get all files in repository on given `refname`.
 pub async fn get_files_on_ref(repo_path: &str, ref_name: &str) -> Result<Vec<String>, CError> {
     let output = Command::new("git")
         .arg("ls-tree")

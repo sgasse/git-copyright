@@ -29,13 +29,13 @@ pub enum CommentSign {
 }
 
 pub async fn check_repo_copyright(
-    repo_path_: &str,
+    repo_path_str: &str,
     name: &str,
     fail_on_diff: bool,
 ) -> Result<(), CError> {
     let config = Config::global();
-    let repo_path = Path::new(repo_path_);
-    let files_to_check = get_files_on_ref(repo_path_, "HEAD").await?;
+    let repo_path = Path::new(repo_path_str);
+    let files_to_check = get_files_on_ref(repo_path_str, "HEAD").await?;
     let files_to_check: Vec<&String> = config
         .filter_files(files_to_check.iter())
         .into_iter()
@@ -49,7 +49,7 @@ pub async fn check_repo_copyright(
 
     let check_and_fix_futures: Vec<_> = files_to_check
         .iter()
-        .map(|filepath| check_file_copyright(filepath, repo_path_, name, &regex_cache))
+        .map(|filepath| check_file_copyright(filepath, repo_path_str, name, &regex_cache))
         .collect();
 
     let results = join_all(check_and_fix_futures).await;
@@ -62,7 +62,7 @@ pub async fn check_repo_copyright(
         return Err(CError::FixError);
     }
 
-    check_for_changes(repo_path_, fail_on_diff).await?;
+    check_for_changes(repo_path_str, fail_on_diff).await?;
 
     Ok(())
 }

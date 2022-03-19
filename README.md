@@ -2,18 +2,44 @@
 
 Extract added/last modified times from git history and add/update copyright notes accordingly.
 
-## Building & Running
-Build
+## Installation
+
+The easiest way to install `git_copyright` is via `cargo` from `crates.io`:
+
+```bash
+cargo install git_copyright
+```
+
+If you want to build it from source, clone the repository and then run:
+
 ```bash
 cargo build --release
 ```
 
-Run (default config)
+## Running
+
+The only required argument is the name that your copyright should carry, e.g.:
+
 ```bash
-RUST_LOG=debug cargo run -- --repo "../tmp/test_repo" --name "DummyCompany Ltd."
+git_copyright --name "MyCompany Ltd."
 ```
 
-Run (with custom config)
+Additional useful arguments:
+
+- `--repo`: Specify a repo-root other than `./`.
+- `--config`: Pass your own YAML config file with comment signs and glob patterns to ignore.
+- `--ignore-changes`: Do not exit with an error even if tracked files changed.
+
+A full command might look like this:
+
 ```bash
-RUST_LOG=debug cargo run -- --repo "../tmp/test_repo" --config "./my_cfg.yml" --name "DummyCompany Ltd."
+git_copyright --name "MyCompany Ltd." --repo "../../my_repo" --config "./custom_cfg.yml" --ignore-changes
+```
+
+## Development
+
+When developing, you can set the log environment variable to see debug log output:
+
+```bash
+RUST_LOG=debug cargo run -- --repo "../../my_repo" --name "MyCompany Ltd."
 ```
