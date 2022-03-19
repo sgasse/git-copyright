@@ -72,7 +72,13 @@ async fn write_copyright(
             data[line_nr] = &copyright_line;
         }
         None => {
-            data.insert(0, copyright_line);
+            if data.len() >= 1 && data[0].starts_with("#!") {
+                // Insert copyright on the second line for shell scripts
+                // that might have a shebang line
+                data.insert(1, copyright_line);
+            } else {
+                data.insert(0, copyright_line);
+            }
         }
     }
 
