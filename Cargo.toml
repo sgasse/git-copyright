@@ -1,11 +1,11 @@
 [package]
 description = "Add/update copyright notes based on git history"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 license-file = "LICENSE-APACHE"
 name = "git_copyright"
 readme = "README.md"
-repository = "https://github.com/sgasse/git-copyright"
+repository = "https://github.com/sgasse/git_copyright"
 
 [lib]
 name = "git_copyright"
